@@ -47,19 +47,30 @@ class PkgMatchDecider(xapian.MatchDecider):
     """
     Extend xapian.MatchDecider to not consider installed packages.
     """
-
-    def __init__(self, pkgs_list):
+    def __init__(self, pkgs_list, profile):
         """
         Set initial parameters.
         """
         xapian.MatchDecider.__init__(self)
+        self.profile = profile
         self.pkgs_list = pkgs_list
 
     def __call__(self, doc):
         """
-        True if the package is not already installed and is not a lib or a doc.
+        True if the package can be recommended
         """
         pkg = doc.get_data()
+        pkg_not_installed = self.package_is_not_installed(pkg)
+        doc_with_min_of_debtags = self.doc_have_min_of_debtags(doc)
+        doc_have_role_program = self.doc_have_role_program_term(doc)
+
+        return (pkg_not_installed and doc_with_min_of_debtags and
+                doc_have_role_program)
+
+    def package_is_not_installed(self, pkg):
+        """
+        True if the package is not already installed.
+        """
         is_new = pkg not in self.pkgs_list
         is_new = is_new and ':' not in pkg
 
@@ -72,6 +83,16 @@ class PkgMatchDecider(xapian.MatchDecider):
             return False
 
         return is_new
+
+    def doc_have_role_program_term(self, doc):
+        pkg_terms = [term.term for term in doc.termlist()]
+        return "XTrole::program" in pkg_terms
+
+    def doc_have_min_of_debtags(self, doc):
+        pkg_terms = [term.term for term in doc.termlist()]
+        terms_in_profile = list(set(self.profile) & set(pkg_terms))
+
+        return len(terms_in_profile) >= 2
 
 
 class PkgExpandDecider(xapian.ExpandDecider):
