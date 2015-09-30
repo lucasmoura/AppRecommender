@@ -173,6 +173,10 @@ def tfidf_weighting(index, docs, content_filter, normalized_weights=0,
 
     sorted_weights = list(reversed(sorted(weights.items(),
                                           key=operator.itemgetter(1))))
+
+    print "BEST WEIGHT TERMS"
+    print sorted_weights[0:5]
+
     return sorted_weights
 
 

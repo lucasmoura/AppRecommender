@@ -60,6 +60,10 @@ class PkgMatchDecider(xapian.MatchDecider):
         True if the package can be recommended
         """
         pkg = doc.get_data()
+
+        if pkg.startswith('apt'):
+            return False
+
         pkg_not_installed = self.package_is_not_installed(pkg)
         doc_with_min_of_debtags = self.doc_have_min_of_debtags(doc)
         doc_have_role_program = self.doc_have_role_program_term(doc)

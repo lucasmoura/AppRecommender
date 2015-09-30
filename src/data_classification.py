@@ -115,16 +115,24 @@ def calculate_time_curve(pkg_time_weight):
     if not pkg_time_weight:
         return 0
 
-    const_a = 10
-    lambda_value = 1
-
-    return const_a * (1 / math.exp((1 - pkg_time_weight) * lambda_value))
+    const_a = 5
+    const_lambda = 10
+    return const_a * math.exp((1 - pkg_time_weight) * const_lambda)
 
 
 def time_weight(term, term_list):
     weight = []
     weight_len = 5
     weight_delta = 0.2
+
+    invalid_tags = ['XTdevel::bugtracker', 'XTadmin::power-management',
+                    'XTadmin::boot', 'XTdevel::buildtools',
+                    'XTadmin::monitoring', 'Zaccount']
+
+    if term in invalid_tags:
+        return 0
+    if not term.startswith('XT') and not term.startswith('Z'):
+        return 0
 
     for pkg in term_list:
         if pkg in pkgs_time_weight:
