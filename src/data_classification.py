@@ -127,7 +127,8 @@ def time_weight(term, term_list):
 
     invalid_tags = ['XTdevel::bugtracker', 'XTadmin::power-management',
                     'XTadmin::boot', 'XTdevel::buildtools',
-                    'XTadmin::monitoring', 'Zaccount']
+                    'XTadmin::monitoring', 'Zaccount',
+                    'XTdevel::library']
 
     if term in invalid_tags:
         return 0

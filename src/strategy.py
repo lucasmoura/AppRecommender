@@ -66,7 +66,10 @@ class PkgMatchDecider(xapian.MatchDecider):
         """
         pkg = doc.get_data()
 
-        if pkg.startswith('apt'):
+        if 'apt' in pkg:
+            return False
+
+        if 'lib' in pkg:
             return False
 
         pkg_not_installed = self.package_is_not_installed(pkg)
@@ -75,9 +78,9 @@ class PkgMatchDecider(xapian.MatchDecider):
         doc_have_role_program = ((not self.need_doc_have_role_program) or
                                  self.doc_have_role_program_term(doc))
 
-        print "pkg_not_installed: ", pkg_not_installed
-        print "doc_with_min_of_debtags: ", doc_with_min_of_debtags
-        print "doc_have_role_program: ", doc_have_role_program
+        # print "pkg_not_installed: ", pkg_not_installed
+        # print "doc_with_min_of_debtags: ", doc_with_min_of_debtags
+        # print "doc_have_role_program: ", doc_have_role_program
 
         return (pkg_not_installed and doc_with_min_of_debtags and
                 doc_have_role_program)
@@ -107,7 +110,7 @@ class PkgMatchDecider(xapian.MatchDecider):
         pkg_terms = [term.term for term in doc.termlist()]
         terms_in_profile = list(set(self.profile) & set(pkg_terms))
 
-        return len(terms_in_profile) >= 2
+        return len(terms_in_profile) >= 1
 
 
 class PkgExpandDecider(xapian.ExpandDecider):
@@ -172,6 +175,7 @@ class ContentBased(RecommendationStrategy):
 
     def get_sugestion_from_profile(self, rec, user, profile,
                                    recommendation_size):
+        profile = ['devel::editor']
         query = xapian.Query(xapian.Query.OP_OR, profile)
         enquire = xapian.Enquire(rec.items_repository)
         enquire.set_weighting_scheme(rec.weight)
