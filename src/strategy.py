@@ -47,13 +47,18 @@ class PkgMatchDecider(xapian.MatchDecider):
     """
     Extend xapian.MatchDecider to not consider installed packages.
     """
-    def __init__(self, pkgs_list, profile):
+    def __init__(self, pkgs_list, profile=[],
+                 need_doc_with_min_of_debtags=False,
+                 need_doc_have_role_program=False):
         """
         Set initial parameters.
         """
         xapian.MatchDecider.__init__(self)
         self.profile = profile
         self.pkgs_list = pkgs_list
+
+        self.need_doc_with_min_of_debtags = need_doc_with_min_of_debtags
+        self.need_doc_have_role_program = need_doc_have_role_program
 
     def __call__(self, doc):
         """
@@ -65,8 +70,14 @@ class PkgMatchDecider(xapian.MatchDecider):
             return False
 
         pkg_not_installed = self.package_is_not_installed(pkg)
-        doc_with_min_of_debtags = self.doc_have_min_of_debtags(doc)
-        doc_have_role_program = self.doc_have_role_program_term(doc)
+        doc_with_min_of_debtags = ((not self.need_doc_with_min_of_debtags) or
+                                   self.doc_have_min_of_debtags(doc))
+        doc_have_role_program = ((not self.need_doc_have_role_program) or
+                                 self.doc_have_role_program_term(doc))
+
+        print "pkg_not_installed: ", pkg_not_installed
+        print "doc_with_min_of_debtags: ", doc_with_min_of_debtags
+        print "doc_have_role_program: ", doc_have_role_program
 
         return (pkg_not_installed and doc_with_min_of_debtags and
                 doc_have_role_program)
