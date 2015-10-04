@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-    recommender suite - recommender experiments suite 
+    recommender suite - recommender experiments suite
 """
 __author__ = "Tassia Camoes Araujo <tassia@gmail.com>"
 __copyright__ = "Copyright (C) 2011 Tassia Camoes Araujo"
@@ -20,19 +20,18 @@ __license__ = """
 """
 
 import sys
-sys.path.insert(0,'../')
+import os
+sys.path.insert(0, '../')
 from config import Config
-from data import PopconXapianIndex, PopconSubmission
 from recommender import Recommender
-from user import LocalSystem, User
+from user import User, PopconSystem
 from evaluation import *
-import logging
 import random
 import Gnuplot
 import numpy
-import shutil
 
-def plot_roc(results,log_file,mean=0):
+
+def plot_roc(results, log_file, mean=0):
     g = Gnuplot.Gnuplot()
     g('set style data lines')
     g.xlabel('False Positive Rate')
@@ -42,7 +41,8 @@ def plot_roc(results,log_file,mean=0):
     g.title("Setup: %s" % log_file.split("/")[-1])
     g('set label "C %.4f" at 0.68,0.2' % results.coverage())
     g('set label "AUC %.4f" at 0.68,0.15' % results.get_auc())
-    g('set label "P(10) %.2f +- %.2f" at 0.68,0.10' % (numpy.mean(results.precision[10]),numpy.std(results.precision[10])))
+    g('set label "P(10) %.2f +- %.2f" at 0.68,0.10' % (numpy.mean(results.precision[10]),
+                                                       numpy.std(results.precision[10])))
     g('set label "F05(100) %.2f +- %.2f" at 0.68,0.05' % (numpy.mean(results.f05[100]),numpy.std(results.f05[100])))
     if mean==1:
         g.plot(Gnuplot.Data(results.get_roc_points(),title="mean ROC"),
