@@ -6,4 +6,49 @@ Install dependencies:
 # apt-get install \
 python-unittest2 python-gnuplot gnuplot
 
-# cd ./src; git clone https://github.com/rueckstiess/expsuite (deprecated tests)
+In order to run the experiments pure.py, roc-sample.py and roc-single.py, it is
+necessary to have some configuration done beforehand.
+
+- It is necessary to have a working xapian index file inside .app-recommender
+  folder. This can be achieved by running the indexer_popcon.py script found on
+  the bin/ directory
+- It is necessary to have a folder named popcon-entries insede the
+  .app-recemmender folder. This directory must contain all the popcon
+  submissions that can be used on the offline experiments.
+
+  It must be said that these files must be organized in a certain pattern. First
+  of all, every popcon-submission possess a unique id. This can be seen on the
+  following popcon-submission example:
+
+  POPULARITY-CONTEST-0 TIME:1312866727 ID:18c40ad842f4407ab153d9207e475498 ARCH:i386 POPCONVER:1.48ubuntu1
+
+  This ID must be used to categorize the files inside the folder. Therefore, the
+  name of the fale should be its ID value. Also, the submissions must organized
+  in subdirectories inside the popcon-entries folder. The subdirectories are
+  composed by the first two letters of an ID value. For example, in the example
+  above, the submission would be found inside popcon-entries/18/18c40ad842f4407ab153d9207e475498
+  Therefore, it is necessary to categorize every submission following this
+  pattern before running the examples.
+
+  - With the data ready, it will be necessary to generate population samples.
+    This can be achieved using the sample-popcon.py script. This script will
+    generate a sample file containg the ID of the selected popcon-submissions
+    that are going to be used on the experiments. They will be found inside the
+    results/misc-popcon folder
+
+    In order to run the script, some parameters are required:
+
+        * min_profile: The minimum number of packages that the popcon submission
+          must have in order to be used in the experiments.
+        * max_profile: The maximum number of packages that the popcon submission
+          must have in order to be used in the experiments.
+        * sample_size: The number of popcon submission that the sample file must
+          have.
+
+    - Once the sample file has been generated, to run any of the experiments
+      scripts, will be necessary to pass as paramters the strategy that will be
+      used and the path of the sample file. It must be said that in pure.py, the
+      strategy is general, in other words, it should not receive the specific
+      strategy, but its type, such as content or collaborative. This does not
+      happen for roc-sample.py and roc-single.py, which require the exact name
+      of the strategy, such as cb or cbt.
