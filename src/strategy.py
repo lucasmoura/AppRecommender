@@ -66,10 +66,7 @@ class PkgMatchDecider(xapian.MatchDecider):
         """
         pkg = doc.get_data()
 
-        if 'apt' in pkg:
-            return False
-
-        if 'lib' in pkg:
+        if re.match(r'^lib.*', pkg) or re.match(r'.*doc$', pkg):
             return False
 
         pkg_not_installed = self.package_is_not_installed(pkg)
@@ -77,10 +74,6 @@ class PkgMatchDecider(xapian.MatchDecider):
                                    self.doc_have_min_of_debtags(doc))
         doc_have_role_program = ((not self.need_doc_have_role_program) or
                                  self.doc_have_role_program_term(doc))
-
-        # print "pkg_not_installed: ", pkg_not_installed
-        # print "doc_with_min_of_debtags: ", doc_with_min_of_debtags
-        # print "doc_have_role_program: ", doc_have_role_program
 
         return (pkg_not_installed and doc_with_min_of_debtags and
                 doc_have_role_program)
@@ -96,9 +89,6 @@ class PkgMatchDecider(xapian.MatchDecider):
             return is_new and "kde" in self.pkgs_list
         if "gnome" in pkg:
             return is_new and "gnome" in self.pkgs_list
-
-        if re.match(r'^lib.*', pkg) or re.match(r'.*doc$', pkg):
-            return False
 
         return is_new
 
