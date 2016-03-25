@@ -175,7 +175,6 @@ class ContentBased(RecommendationStrategy):
 
     def get_sugestion_from_profile(self, rec, user, profile,
                                    recommendation_size):
-        profile = ['devel::editor']
         query = xapian.Query(xapian.Query.OP_OR, profile)
         enquire = xapian.Enquire(rec.items_repository)
         enquire.set_weighting_scheme(rec.weight)
