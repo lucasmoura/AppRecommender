@@ -6,6 +6,8 @@ import apt
 import commands
 import nltk
 import pandas as pd
+import operator
+import pickle
 import re
 import xapian
 
@@ -13,9 +15,12 @@ from nltk.stem.snowball import SnowballStemmer
 
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.cluster import KMeans
+from sklearn.metrics import silhouette_score
 
-from src.ml.pkg_time import get_packages_from_apt_mark
 from src.ml.data import MachineLearningData
+from src.config import Config
+
+USER_DATA_DIR = Config().user_data_dir
 
 
 def stem_description(pkg_description):
@@ -69,7 +74,6 @@ def get_system_pkgs():
 def main():
 
     cache = apt.Cache()
-    manual_pkgs = get_packages_from_apt_mark()
     pkgs_description = []
     pkgs_name = []
     ml_data = MachineLearningData()
@@ -77,9 +81,27 @@ def main():
     axi = xapian.Database(axi_path)
     system_pkgs = get_system_pkgs()
 
-    for index, pkg_name in enumerate(manual_pkgs):
-        if (pkg_name.startswith('lib') or pkg_name.endswith('doc') or
-                pkg_name in system_pkgs):
+    valid_pkgs = {}
+    index = 3000
+
+    with open(USER_DATA_DIR + 'pkgs_classifications.txt', 'ra') as data:
+        pkg_data = pickle.load(data)
+
+    with open('pc.txt', 'ra') as popcon:
+        for result in popcon.readlines()[1:-2]:
+            info = result.split(' ')
+            pkg = info[2]
+
+            if (pkg.startswith('lib') or pkg.endswith('data') or
+                    pkg in system_pkgs or pkg.endswith('-data') or
+                    pkg.endswith('doc')):
+                continue
+
+            valid_pkgs[pkg] = index
+            index -= 1
+
+    for pkg_name in pkg_data.keys():
+        if pkg_name not in valid_pkgs:
             continue
 
         pkg = cache[pkg_name].versions[0]
@@ -99,24 +121,36 @@ def main():
         pkgs_description.append(' '.join(description))
         pkgs_name.append(pkg_name)
 
-    print 'Num packages: {0}'.format(len(pkgs_description))
+    num_pkgs = len(pkgs_description)
+    print 'Num packages: {0}'.format(num_pkgs)
 
     vectorizer = TfidfVectorizer(max_df=0.8,
                                  max_features=5000,
                                  min_df=3,
                                  stop_words='english',
-                                 use_idf=True,
-                                 ngram_range=(1, 3))
+                                 use_idf=True)
 
     pkg_features = vectorizer.fit_transform(pkgs_description)
     terms = vectorizer.get_feature_names()
 
     print pkg_features.shape
+    num_clusters = 0
+    max_value = -2
 
-    num_clusters = 8
+    for i in range(2, 40, 2):
+        kmeans = KMeans(init='k-means++', n_clusters=i, n_init=10)
+        cluster_labels = kmeans.fit_predict(pkg_features)
+        
+        silhouette_avg = silhouette_score(pkg_features, cluster_labels)
+        print("For n_clusters =", i,
+            "The average silhouette_score is :", silhouette_avg)
+
+        if silhouette_avg > max_value:
+            max_value = silhouette_avg
+            num_clusters = i
+
     kmeans = KMeans(init='k-means++', n_clusters=num_clusters, n_init=10)
     kmeans.fit(pkg_features)
-
     clusters = kmeans.labels_.tolist()
 
     user_pkgs = {'pkg': pkgs_name, 'description': pkgs_description,
@@ -126,6 +160,10 @@ def main():
                          columns=['pkg', 'description', 'clusters'])
 
     print frame['clusters'].value_counts()
+
+    preferred_clusters = {}
+    for i in range(num_clusters):
+        preferred_clusters[i] = 0
 
     print("Top terms per cluster:")
     print()
@@ -137,10 +175,21 @@ def main():
         print '\n'
         print '\n'
         print("Cluster %d pkgs:" % i)
-        for pkg in frame.ix[i]['pkg'].values.tolist():
+        cluster_pkgs = frame.ix[i]['pkg'].values.tolist()
+        num_pkgs = len(cluster_pkgs)
+        for pkg in cluster_pkgs:
             print(' %s,' % pkg)
+            preferred_clusters[i] += valid_pkgs[pkg]
+
+        preferred_clusters[i] /= num_pkgs
         print '\n'
         print '\n'
+
+    sorted_clusters = sorted(preferred_clusters.items(),
+                             key=operator.itemgetter(1))
+    index = [i for i,j in sorted_clusters]
+    for i in reversed(index):
+        print 'Cluster {}: {}'.format(i, preferred_clusters[i])
 
 
 if __name__ == '__main__':
