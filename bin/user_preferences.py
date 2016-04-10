@@ -137,7 +137,7 @@ def main():
     num_clusters = 0
     max_value = -2
 
-    for i in range(2, 40, 2):
+    for i in range(2, 60, 2):
         kmeans = KMeans(init='k-means++', n_clusters=i, n_init=10)
         cluster_labels = kmeans.fit_predict(pkg_features)
         
@@ -175,7 +175,13 @@ def main():
         print '\n'
         print '\n'
         print("Cluster %d pkgs:" % i)
-        cluster_pkgs = frame.ix[i]['pkg'].values.tolist()
+        cluster_pkgs = frame.ix[i]['pkg']
+        
+        if type(cluster_pkgs) == str:
+            cluster_pkgs = [cluster_pkgs]
+        else:
+            cluster_pkgs = cluster_pkgs.values.tolist()
+        
         num_pkgs = len(cluster_pkgs)
         for pkg in cluster_pkgs:
             print(' %s,' % pkg)
