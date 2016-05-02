@@ -44,7 +44,12 @@ class Config(Singleton):
             self.output = "apprec.log"
 
             # data_source options
-            self.base_dir = os.path.expanduser('~/.app-recommender')
+            sudoer_user = os.getenv("SUDO_USER")
+            if sudoer_user:
+                sudoer_user_dir = '/home/%s/.app-recommender' % sudoer_user
+                self.base_dir = os.path.expanduser(sudoer_user_dir)
+            else:
+                self.base_dir = os.path.expanduser('~/.app-recommender')
             self.user_data_dir = 'user_data/'
             # filters for valid packages
             self.filters_dir = os.path.join(self.base_dir, "filters")

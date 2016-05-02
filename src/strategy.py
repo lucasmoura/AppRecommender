@@ -42,7 +42,7 @@ from ml.bag_of_words import BagOfWords
 from ml.bayes_matrix import BayesMatrix
 from ml.data import MachineLearningData
 
-XAPIAN_DATABASE_PATH = path.expanduser('~/.app-recommender/axi_desktopapps/')
+XAPIAN_DATABASE_PATH = Config().axi_desktopapps + '/'
 USER_DATA_DIR = Config().user_data_dir
 PKGS_CLASSIFICATIONS_INDICES = (USER_DATA_DIR +
                                 'pkgs_classifications_indices.txt')

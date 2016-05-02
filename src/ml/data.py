@@ -53,10 +53,9 @@ class FilterTerms():
 
 class MachineLearningData():
 
-    XAPIAN_DATABASE_PATH = path.expanduser(
-        '~/.app-recommender/axi_desktopapps/')
-    USER_DATA_DIR = Config().user_data_dir
     BASE_DIR = Config().base_dir
+    USER_DATA_DIR = Config().user_data_dir
+    XAPIAN_DATABASE_PATH = Config().axi_desktopapps + '/'
 
     PKG_DATA_PATH = USER_DATA_DIR + 'pkg_data.txt'
 
