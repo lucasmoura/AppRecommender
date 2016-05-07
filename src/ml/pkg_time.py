@@ -1,20 +1,23 @@
+import commands
 import os
 import re
-import sys
-import commands
 
-sys.path.insert(0, "{0}/../..".format(os.path.dirname(__file__)))
-
-from src.data_classification import get_time_from_package, get_alternative_pkg
+from src.data_classification import get_time_from_package
 from src.config import Config
+from src.user import LocalSystem
 
 USER_DATA_DIR = Config().user_data_dir
 
 
-def create_pkg_data():
-    manual_pkgs = get_packages_from_apt_mark()
+def create_pkg_data(manual_pkgs=None):
+    if not manual_pkgs:
+        user = LocalSystem()
+        user.no_auto_pkg_profile()
+        manual_pkgs = user.pkg_profile
+
     pkgs_time = get_packages_time(manual_pkgs)
     save_package_time(pkgs_time)
+
     return pkgs_time
 
 
@@ -34,21 +37,36 @@ def get_package_data(file_path=USER_DATA_DIR + 'pkg_data.txt'):
         return create_pkg_data()
 
 
+def get_best_time(pkg):
+    valid_regex = re.compile(r'/usr/bin/|/usr/sbin|/usr/game/|/usr/lib/.+/')
+    pkg_files = commands.getoutput('dpkg -L {}'.format(pkg))
+
+    bestatime, bestmtime = 0, 0
+    for pkg_file in pkg_files.splitlines():
+        if valid_regex.search(pkg_file):
+            access, modify = get_time_from_package(pkg_file, pkg_bin=False)
+
+            if access >= bestatime:
+                bestatime = access
+                bestmtime = modify
+
+    return (bestmtime, bestatime)
+
+
 def get_packages_time(pkgs):
     pkgs_time = {}
 
     for pkg in pkgs:
 
-        modify, access = get_time_from_package(pkg)
-
-        if not modify or not access:
-            pkg_tmp = get_alternative_pkg(pkg)
-            modify, access = get_time_from_package(pkg_tmp)
+        modify, access = get_best_time(pkg)
 
         if modify and access:
+            print 'ADD: {}'.format(pkg)
             pkgs_time[pkg] = []
             pkgs_time[pkg].append(modify)
             pkgs_time[pkg].append(access)
+        else:
+            print 'NOT: {} {} {}'.format(pkg, modify, access)
 
     return pkgs_time
 
@@ -67,15 +85,3 @@ def save_package_time(pkgs_time, file_path=USER_DATA_DIR + 'pkg_data.txt'):
             pkg_line = pkg_str.format(pkg=pkg, modify=times[0],
                                       access=times[1])
             pkg_data.write(pkg_line)
-
-
-def get_packages_from_apt_mark():
-    dpkg_output = commands.getoutput('apt-mark showmanual')
-    pkgs = []
-
-    for pkg in dpkg_output.splitlines():
-
-        if not re.match(r'^lib', pkg):
-            pkgs.append(pkg)
-
-    return pkgs
