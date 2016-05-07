@@ -6,10 +6,14 @@ import sys
 sys.path.insert(0, "{0}/../".format(os.path.dirname(__file__)))
 
 import src.ml.pkg_time as pkg_time
+from src.user import LocalSystem
 
 
 def main():
-    manual_pkgs = pkg_time.get_packages_from_apt_mark()
+    user = LocalSystem()
+    user.no_auto_pkg_profile()
+    manual_pkgs = user.pkg_profile
+
     print "Size of manual installed packages apt-mark:", len(manual_pkgs)
 
     pkgs_time = pkg_time.get_packages_time(manual_pkgs)
