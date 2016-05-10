@@ -13,4 +13,4 @@ class Initialize:
         script_path = os.path.dirname(os.path.abspath(__file__))
         script_path += '/../bin/prepare_data.sh'
 
-        commands.getoutput(script_path)
+        output = commands.getoutput(script_path)
